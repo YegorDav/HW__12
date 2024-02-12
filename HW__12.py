@@ -1,114 +1,81 @@
-from collections import UserDict
-from datetime import datetime
-import pickle  # Додаємо імпорт для серіалізації/десеріалізації
+import re
+import pickle  # Для серіалізації/десеріалізації об'єктів
 
+class ContactBook:
+    def __init__(self, file_path):
+        self.contacts = {}
+        self.file_path = file_path
+        self.load_contacts()
 
-class Field:
-    def __init__(self, value):
-        self.value = value
+    def add_contact(self, name, phone):
+        if name not in self.contacts:
+            self.contacts[name] = phone
+            self.save_contacts()
+            return f"Added {name} with phone number {phone}"
+        else:
+            return f"Contact {name} already exists. Use 'change' command to update the phone number."
 
-    def __str__(self):
-        return str(self.value)
+    def change_phone(self, name, new_phone):
+        if name in self.contacts:
+            self.contacts[name] = new_phone
+            self.save_contacts()
+            return f"Changed phone number for {name} to {new_phone}"
+        else:
+            return f"Contact {name} not found"
 
-class Name(Field):
-    pass
+    def find_phone(self, query):
+        results = []
+        for name, phone in self.contacts.items():
+            if query.lower() in name.lower() or query in phone:
+                results.append(f"{name}: {phone}")
+        if results:
+            return "\n".join(results)
+        else:
+            return f"No matching contacts for '{query}'"
 
-class Phone(Field):
-    def __init__(self, value):
-        # Валідація формату телефону (10 цифр)
-        if not (isinstance(value, str) and value.isdigit() and len(value) == 10):
-            raise ValueError("Invalid phone number format")
-        super().__init__(value)
+    def show_all(self):
+        return "\n".join([f"{name}: {phone}" for name, phone in self.contacts.items()])
 
-class Birthday(Field):
-    def __init__(self, value):
-        # Перевірка правильності формату та значення дня народження
+    def close(self):
+        self.save_contacts()
+        return "Good bye!"
+
+    def load_contacts(self):
         try:
-            datetime.strptime(value, "%Y-%m-%d")
-        except ValueError:
-            raise ValueError("Invalid birthday format. Use YYYY-MM-DD.")
-        super().__init__(value)
-
-class Record:
-    def __init__(self, name, birthday=None):
-        self.name = Name(name)
-        self.phones = []
-        self.birthday = Birthday(birthday) if birthday else None
-
-    def add_phone(self, phone_number):
-        phone = Phone(phone_number)
-        self.phones.append(phone)
-
-    def remove_phone(self, phone_number):
-        self.phones = [phone for phone in self.phones if phone.value != phone_number]
-
-    def edit_phone(self, old_phone_number, new_phone_number):
-        if not (isinstance(new_phone_number, str) and new_phone_number.isdigit() and len(new_phone_number) == 10):
-            raise ValueError("Invalid new phone number format")
-
-        found = False
-        for phone in self.phones:
-            if phone.value == old_phone_number:
-                phone.value = new_phone_number
-                found = True
-                break
-
-        if not found:
-            raise ValueError(f"Phone number {old_phone_number} not found")
-
-    def find_phone(self, phone_number):
-        for phone in self.phones:
-            if phone.value == phone_number:
-                return phone
-        return None
-
-    def __str__(self):
-        phones_str = '; '.join(str(phone) for phone in self.phones)
-        return f"Contact name: {self.name.value}, phones: {phones_str}"
-
-    def days_to_birthday(self):
-        if self.birthday:
-            today = datetime.now().date()
-            next_birthday = datetime(today.year, *map(int, self.birthday.value.split('-'))).date()
-            if today > next_birthday:
-                next_birthday = datetime(today.year + 1, *map(int, self.birthday.value.split('-'))).date()
-            days_left = (next_birthday - today).days
-            return days_left
-        return None
-
-class AddressBook(UserDict):
-    def add_record(self, record):
-        self.data[record.name.value] = record
-
-    def find(self, name):
-        return self.data.get(name)
-
-    def delete(self, name):
-        if name in self.data:
-            del self.data[name]
-
-    def iterator(self, chunk_size=5):
-        all_records = list(self.data.values())
-        for i in range(0, len(all_records), chunk_size):
-            yield all_records[i:i + chunk_size]
-
-    def save_to_file(self, filename="address_book.pickle"):
-        with open(filename, 'wb') as file:
-            pickle.dump(self.data, file)
-
-    def load_from_file(self, filename="address_book.pickle"):
-        try:
-            with open(filename, 'rb') as file:
-                self.data = pickle.load(file)
-        except FileNotFoundError:
-            # Якщо файл не знайдено, ігноруємо помилку і продовжуємо з пустою адресною книгою
+            with open(self.file_path, 'rb') as file:
+                self.contacts = pickle.load(file)
+        except (FileNotFoundError, EOFError):
+            # Ignore if the file doesn't exist or is empty
             pass
 
-    def search(self, query):
-        results = []
-        for record in self.data.values():
-            # Пошук збігів за іменем та номером телефону
-            if query.lower() in record.name.value.lower() or \
-                    any(query in phone.value for phone in record.phones):
-                results.append(record)
-        return results
+    def save_contacts(self):
+        with open(self.file_path, 'wb') as file:
+            pickle.dump(self.contacts, file)
+
+def input_error(func):
+    def wrapper(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except (KeyError, ValueError, IndexError) as e:
+            return str(e)
+    return wrapper
+
+def parse_command(command):
+    # Залиште цю функцію без змін
+
+def handle_command(contact_book, command):
+    # Залиште цю функцію без змін
+
+def main():
+    contact_book = ContactBook("contacts.pkl")  # Зазначте свій шлях та ім'я файлу
+    while True:
+        command = input("Enter command: ")
+        parsed_command = parse_command(command)
+        if parsed_command == "close":
+            print("Good bye!")
+            break
+        response = handle_command(contact_book, parsed_command)
+        print(response)
+
+if __name__ == "__main__":
+    main()
