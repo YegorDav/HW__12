@@ -206,15 +206,15 @@ def handle_command(address_book, command):
     if command == "hello":
         return "How can I help you?"
     elif command[0] == "add":
-        return address_book.add_contact(address_book, command[1], command[2])
+        return add_contact(address_book, command[1], command[2])
     elif command[0] == "change":
-        return address_book.change_phone(address_book, command[1], command[2])
+        return change_phone(address_book, command[1], command[2])
     elif command[0] == "phone":
-        return address_book.find_phone(address_book, command[1])
+        return find_phone(address_book, command[1])
     elif command == "show all":
-        return address_book.show_all()
+        return show_all(address_book)
     elif command == "close":
-        return address_book.close()
+        return close(address_book)
     else:
         return "Unknown command"
 
