@@ -31,7 +31,7 @@ class Phone(Field):
 
 class Birthday(Field):
     def __init__(self, value):
-        self._set_value(value)
+        self.value = value
 
     def is_valid(self, value):
         try:
