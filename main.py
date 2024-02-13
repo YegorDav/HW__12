@@ -1,6 +1,7 @@
 from collections import UserDict
 from datetime import datetime
-import pickle 
+import pickle
+
 
 class Field:
     def __init__(self, value):
@@ -9,8 +10,10 @@ class Field:
     def __str__(self):
         return str(self.value)
 
+
 class Name(Field):
     pass
+
 
 class Phone(Field):
     def __init__(self, value):
@@ -28,6 +31,7 @@ class Phone(Field):
         if not self.is_valid(new_value):
             raise ValueError("Invalid phone number format")
         self.__value = new_value
+
 
 class Birthday(Field):
     def __init__(self, value):
@@ -49,6 +53,7 @@ class Birthday(Field):
         if not self.is_valid(new_value):
             raise ValueError("Invalid birthday format. Use YYYY-MM-DD.")
         self.__value = new_value
+
 
 class Record:
     def __init__(self, name, birthday=None):
@@ -97,6 +102,7 @@ class Record:
             return days_left
         return None
 
+
 class AddressBook(UserDict):
     def __init__(self, file_path='address_book.pkl'):
         super().__init__()
@@ -129,21 +135,18 @@ class AddressBook(UserDict):
         for i in range(0, len(all_records), chunk_size):
             yield all_records[i:i + chunk_size]
 
-class ContactBook:
-    def __init__(self, address_book):
-        self.address_book = address_book
 
     def add_contact(self, name, phone):
-        if name not in self.address_book.data:
+        if name not in self.data:
             record = Record(name)
             record.add_phone(phone)
-            self.address_book.add_record(record)
+            self.add_record(record)
             return f"Added {name} with phone number {phone}"
         else:
             return f"Contact {name} already exists. Use 'change' command to update the phone number."
 
     def change_phone(self, name, new_phone):
-        record = self.address_book.find(name)
+        record = self.find(name)
         if record:
             record.add_phone(new_phone)
             return f"Changed phone number for {name} to {new_phone}"
@@ -151,7 +154,7 @@ class ContactBook:
             return f"Contact {name} not found"
 
     def find_phone(self, name):
-        record = self.address_book.find(name)
+        record = self.find(name)
         if record:
             phones_str = '; '.join(str(phone) for phone in record.phones)
             return f"Phone number for {name} is {phones_str}"
@@ -159,13 +162,12 @@ class ContactBook:
             return f"Contact {name} not found"
 
     def show_all(self):
-        return "\n".join([str(record) for record in self.address_book.data.values()])
+        return "\n".join([str(record) for record in self.data.values()])
 
     def close(self):
-        self.address_book.save_address_book()  # Зберегти дані перед виходом
+        self.save_address_book()  # Зберегти дані перед виходом
         return "Good bye!"
 
-# Решта коду незмінна
 
 def input_error(func):
     def wrapper(*args, **kwargs):
@@ -173,22 +175,55 @@ def input_error(func):
             return func(*args, **kwargs)
         except (KeyError, ValueError, IndexError) as e:
             return str(e)
+
     return wrapper
 
+
 def parse_command(command):
-    # Решта коду незмінна
+    if command.lower() == "hello":
+        return "hello"
+    elif command.lower().startswith("add "):
+        name, phone = command[4:].split(" ")
+        return "add", name, phone
+    elif command.lower().startswith("change "):
+        name, phone = command[7:].split(" ")
+        return "change", name, phone
+    elif command.lower().startswith("phone "):
+        name = command[6:]
+        return "phone", name
+    elif command.lower() == "show all":
+        return "show all"
+    elif command.lower() in ["good bye", "close", "exit"]:
+        return "close"
+    else:
+        return "unknown"
+
 
 def handle_command(contact_book, command):
-    # Решта коду незмінна
+    if command == "hello":
+        return "How can I help you?"
+    elif command[0] == "add":
+        return contact_book.add_contact(command[1], command[2])
+    elif command[0] == "change":
+        return contact_book.change_phone(command[1], command[2])
+    elif command[0] == "phone":
+        return contact_book.find_phone(command[1])
+    elif command == "show all":
+        return contact_book.show_all()
+    elif command == "close":
+        return contact_book.close()
+    else:
+        return "Unknown command"
 
-def main():
+
+def run():
     address_book = AddressBook()
-    contact_book = ContactBook(address_book)
+    contact_book = AddressBook(address_book)
 
     while True:
         command = input("Enter command: ")
         parsed_command = parse_command(command)
-        
+
         if parsed_command == "close":
             print(contact_book.close())
             break
@@ -196,5 +231,6 @@ def main():
         response = handle_command(contact_book, parsed_command)
         print(response)
 
+
 if __name__ == "__main__":
-    main()
+    run()
