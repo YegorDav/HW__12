@@ -33,12 +33,12 @@ class Birthday(Field):
     def __init__(self, value):
         self._set_value(value)
 
-    def _set_value(self, value):
+    def is_valid(self, value):
         try:
-            datetime.strptime(value, "%Y-%m-%d")
+            datetime.strptime(value, '%d.%m.%Y')
+            return True
         except ValueError:
-            raise ValueError("Invalid birthday format. Use YYYY-MM-DD.")
-        super().__init__(value)
+            return False
 
     @property
     def value(self):
