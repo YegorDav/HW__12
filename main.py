@@ -102,6 +102,42 @@ class Record:
             return days_left
         return None
 
+def add_contact(address_book, name, phone):
+    if name not in address_book.data:
+        record = Record(name)
+        record.add_phone(phone)
+        address_book.add_record(record)
+        return f"Added {name} with phone number {phone}"
+    else:
+        return f"Contact {name} already exists. Use 'change' command to update the phone number."
+
+
+def change_phone(address_book, name, new_phone):
+    record = address_book.find(name)
+    if record:
+        record.add_phone(new_phone)
+        return f"Changed phone number for {name} to {new_phone}"
+    else:
+        return f"Contact {name} not found"
+
+
+def find_phone(address_book, name):
+    record = address_book.find(name)
+    if record:
+        phones_str = '; '.join(str(phone) for phone in record.phones)
+        return f"Phone number for {name} is {phones_str}"
+    else:
+        return f"Contact {name} not found"
+
+
+def show_all(address_book):
+    return "\n".join([str(record) for record in address_book.data.values()])
+
+
+def close(address_book):
+    address_book.save_address_book()  # Зберегти дані перед виходом
+    return
+
 
 class AddressBook(UserDict):
     def __init__(self, file_path='address_book.pkl'):
@@ -120,53 +156,20 @@ class AddressBook(UserDict):
         with open(self.file_path, 'wb') as file:
             pickle.dump(self.data, file)
 
-    def add_record(self, record):
-        self.data[record.name.value] = record
+    def add_record(address_book, record):
+        address_book.data[record.name.value] = record
 
-    def find(self, name):
-        return self.data.get(name)
+    def find(address_book, name):
+        return address_book.data.get(name)
 
-    def delete(self, name):
-        if name in self.data:
-            del self.data[name]
+    def delete(address_book, name):
+        if name in address_book.data:
+            del address_book.data[name]
 
-    def iterator(self, chunk_size=5):
-        all_records = list(self.data.values())
+    def iterator(address_book, chunk_size=5):
+        all_records = list(address_book.data.values())
         for i in range(0, len(all_records), chunk_size):
             yield all_records[i:i + chunk_size]
-
-
-    def add_contact(self, name, phone):
-        if name not in self.data:
-            record = Record(name)
-            record.add_phone(phone)
-            self.add_record(record)
-            return f"Added {name} with phone number {phone}"
-        else:
-            return f"Contact {name} already exists. Use 'change' command to update the phone number."
-
-    def change_phone(self, name, new_phone):
-        record = self.find(name)
-        if record:
-            record.add_phone(new_phone)
-            return f"Changed phone number for {name} to {new_phone}"
-        else:
-            return f"Contact {name} not found"
-
-    def find_phone(self, name):
-        record = self.find(name)
-        if record:
-            phones_str = '; '.join(str(phone) for phone in record.phones)
-            return f"Phone number for {name} is {phones_str}"
-        else:
-            return f"Contact {name} not found"
-
-    def show_all(self):
-        return "\n".join([str(record) for record in self.data.values()])
-
-    def close(self):
-        self.save_address_book()  # Зберегти дані перед виходом
-        return "Good bye!"
 
 
 def input_error(func):
@@ -199,38 +202,37 @@ def parse_command(command):
         return "unknown"
 
 
-def handle_command(contact_book, command):
+def handle_command(address_book, command):
     if command == "hello":
         return "How can I help you?"
     elif command[0] == "add":
-        return contact_book.add_contact(command[1], command[2])
+        return address_book.add_contact(address_book, command[1], command[2])
     elif command[0] == "change":
-        return contact_book.change_phone(command[1], command[2])
+        return address_book.change_phone(address_book, command[1], command[2])
     elif command[0] == "phone":
-        return contact_book.find_phone(command[1])
+        return address_book.find_phone(address_book, command[1])
     elif command == "show all":
-        return contact_book.show_all()
+        return address_book.show_all()
     elif command == "close":
-        return contact_book.close()
+        return address_book.close()
     else:
         return "Unknown command"
 
 
-def run():
+def main():
     address_book = AddressBook()
-    contact_book = AddressBook(address_book)
 
     while True:
         command = input("Enter command: ")
         parsed_command = parse_command(command)
 
         if parsed_command == "close":
-            print(contact_book.close())
+            print(address_book.close())
             break
 
-        response = handle_command(contact_book, parsed_command)
+        response = handle_command(address_book, parsed_command)
         print(response)
 
 
 if __name__ == "__main__":
-    run()
+    main()
